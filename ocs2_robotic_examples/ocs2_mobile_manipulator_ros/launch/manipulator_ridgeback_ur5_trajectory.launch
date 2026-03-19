@@ -1,0 +1,28 @@
+<launch>
+      <arg name="rviz"        default="true" />
+      <arg name="debug"       default="false" />
+
+      
+      <arg name="urdfFile"    value="$(find ocs2_robotic_assets)/resources/mobile_manipulator/ridgeback_ur5/urdf/ridgeback_ur5.urdf" />
+      <arg name="taskFile"    value="$(find ocs2_mobile_manipulator)/config/ridgeback_ur5/task.info" />
+      <arg name="libFolder"   value="$(find ocs2_mobile_manipulator)/auto_generated/ridgeback_ur5" />
+
+      <include file="$(find ocs2_mobile_manipulator_ros)/launch/include/mobile_manipulator.launch">
+            <arg name="rviz"                    value="$(arg rviz)" />
+            <arg name="debug"                   value="$(arg debug)" />
+            <arg name="urdfFile"                value="$(arg urdfFile)" />
+            <arg name="taskFile"                value="$(arg taskFile)" />
+            <arg name="libFolder"               value="$(arg libFolder)" />
+            <arg name="use_interactive_target"  value="false" />
+            <arg name="use_trajectory_target"   value="true" />
+            <arg name="trajectory_type"         value="circle" />
+            <arg name="trajectory_publish_rate" value="5.0" />
+            <arg name="trajectory_time_horizon" value="3.0" />
+            <arg name="trajectory_time_step"    value="0.1" />
+            <arg name="circle_center_x"         value="0.75" />
+            <arg name="circle_center_y"         value="0.0" />
+            <arg name="circle_center_z"         value="0.85" />
+            <arg name="circle_radius"           value="0.12" />
+            <arg name="circle_angular_velocity" value="0.5" />
+      </include>
+</launch>

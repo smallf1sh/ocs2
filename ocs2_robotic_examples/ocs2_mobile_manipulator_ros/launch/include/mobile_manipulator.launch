@@ -6,6 +6,19 @@
       <!-- Set nodes on debug mode -->
       <arg name="debug"  default="false" />
 
+      <arg name="circle_center_x" default="0.75" />
+      <arg name="circle_center_y" default="0.0" />
+      <arg name="circle_center_z" default="0.85" />
+      <arg name="circle_radius" default="0.12" />
+      <arg name="circle_angular_velocity" default="0.5" />
+
+      <arg name="use_interactive_target" default="true" />
+      <arg name="use_trajectory_target" default="true" />
+      <arg name="trajectory_type" default="circle" />
+      <arg name="trajectory_publish_rate" default="5.0" />
+      <arg name="trajectory_time_horizon" default="3.0" />
+      <arg name="trajectory_time_step" default="0.1" />
+
       <!-- The URDF model of the robot -->
       <arg name="urdfFile" />
       <!-- The task file for the mpc. -->
@@ -31,7 +44,18 @@
 
       <node pkg="ocs2_mobile_manipulator_ros" type="mobile_manipulator_dummy_mrt_node" name="mobile_manipulator_dummy_mrt_node" 
             output="screen" launch-prefix="gnome-terminal --" />
-
-      <node if="$(arg rviz)" pkg="ocs2_mobile_manipulator_ros" type="mobile_manipulator_target" name="mobile_manipulator_target" 
-            output="screen" launch-prefix="" />
+      <node if="$(eval arg('rviz') and arg('use_interactive_target'))" pkg="ocs2_mobile_manipulator_ros" type="mobile_manipulator_target" name="mobile_manipulator_target" output="screen" launch-prefix="" />
+  
+       <node if="$(arg use_trajectory_target)" pkg="ocs2_mobile_manipulator_ros" type="mobile_manipulator_trajectory_target" name="mobile_manipulator_trajectory_target" output="screen" launch-prefix="">
+            <param name="robot_name" value="mobile_manipulator" />
+            <param name="trajectory_type" value="$(arg trajectory_type)" />
+            <param name="publish_rate" value="$(arg trajectory_publish_rate)" />
+            <param name="time_horizon" value="$(arg trajectory_time_horizon)" />
+            <param name="time_step" value="$(arg trajectory_time_step)" />
+            <param name="circle_center_x" value="$(arg circle_center_x)" />
+            <param name="circle_center_y" value="$(arg circle_center_y)" />
+            <param name="circle_center_z" value="$(arg circle_center_z)" />
+            <param name="circle_radius" value="$(arg circle_radius)" />
+            <param name="circle_angular_velocity" value="$(arg circle_angular_velocity)" />
+       </node>
 </launch>

@@ -93,6 +93,7 @@ void MobileManipulatorDummyVisualization::launchVisualizerNode(ros::NodeHandle& 
 
   stateOptimizedPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/mobile_manipulator/optimizedStateTrajectory", 1);
   stateOptimizedPosePublisher_ = nodeHandle.advertise<geometry_msgs::PoseArray>("/mobile_manipulator/optimizedPoseTrajectory", 1);
+  endEffectorTrackingPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("/mobile_manipulator/endEffectorTracking", 1);
   // Get ROS parameter
   std::string urdfFile, taskFile;
   nodeHandle.getParam("/urdfFile", urdfFile);
@@ -127,6 +128,7 @@ void MobileManipulatorDummyVisualization::update(const SystemObservation& observ
 
   publishObservation(timeStamp, observation);
   publishTargetTrajectories(timeStamp, command.mpcTargetTrajectories_);
+  publishEndEffectorTracking(timeStamp, observation, command.mpcTargetTrajectories_);
   publishOptimizedTrajectory(timeStamp, policy);
   if (geometryVisualization_ != nullptr) {
     geometryVisualization_->publishDistances(observation.state);
@@ -166,6 +168,10 @@ void MobileManipulatorDummyVisualization::publishObservation(const ros::Time& ti
 /******************************************************************************************************/
 void MobileManipulatorDummyVisualization::publishTargetTrajectories(const ros::Time& timeStamp,
                                                                     const TargetTrajectories& targetTrajectories) {
+  if (targetTrajectories.stateTrajectory.empty()) {
+    return;
+  }
+
   // publish command transform
   const Eigen::Vector3d eeDesiredPosition = targetTrajectories.stateTrajectory.back().head(3);
   Eigen::Quaterniond eeDesiredOrientation;
@@ -177,6 +183,71 @@ void MobileManipulatorDummyVisualization::publishTargetTrajectories(const ros::T
   command_tf.transform.translation = ros_msg_helpers::getVectorMsg(eeDesiredPosition);
   command_tf.transform.rotation = ros_msg_helpers::getOrientationMsg(eeDesiredOrientation);
   tfBroadcaster_.sendTransform(command_tf);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void MobileManipulatorDummyVisualization::publishEndEffectorTracking(const ros::Time& timeStamp, const SystemObservation& observation,
+                                                                     const TargetTrajectories& targetTrajectories) {
+  if (targetTrajectories.stateTrajectory.empty()) {
+    return;
+  }
+
+  const std::array<scalar_t, 3> actualColor{0.0, 0.4470, 0.7410};
+  const std::array<scalar_t, 3> desiredColor{0.8500, 0.3250, 0.0980};
+  const std::array<scalar_t, 3> errorColor{0.4660, 0.6740, 0.1880};
+
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+  pinocchio::forwardKinematics(model, data, observation.state);
+  pinocchio::updateFramePlacements(model, data);
+
+  const auto eeIndex = model.getBodyId(modelInfo_.eeFrame);
+  const vector_t eeActualPosition = data.oMf[eeIndex].translation();
+  const vector_t eeDesiredPosition = targetTrajectories.stateTrajectory.back().head(3);
+
+  visualization_msgs::MarkerArray markerArray;
+
+  visualization_msgs::Marker actualMarker;
+  actualMarker.header = ros_msg_helpers::getHeaderMsg("world", timeStamp);
+  actualMarker.ns = "EE Actual";
+  actualMarker.id = 0;
+  actualMarker.type = visualization_msgs::Marker::SPHERE;
+  actualMarker.action = visualization_msgs::Marker::ADD;
+  actualMarker.pose.orientation.w = 1.0;
+  actualMarker.pose.position = ros_msg_helpers::getPointMsg(eeActualPosition);
+  actualMarker.scale.x = 0.06;
+  actualMarker.scale.y = 0.06;
+  actualMarker.scale.z = 0.06;
+  actualMarker.color = ros_msg_helpers::getColor(actualColor);
+  markerArray.markers.push_back(actualMarker);
+
+  visualization_msgs::Marker desiredMarker;
+  desiredMarker.header = ros_msg_helpers::getHeaderMsg("world", timeStamp);
+  desiredMarker.ns = "EE Desired";
+  desiredMarker.id = 1;
+  desiredMarker.type = visualization_msgs::Marker::SPHERE;
+  desiredMarker.action = visualization_msgs::Marker::ADD;
+  desiredMarker.pose.orientation.w = 1.0;
+  desiredMarker.pose.position = ros_msg_helpers::getPointMsg(eeDesiredPosition);
+  desiredMarker.scale.x = 0.06;
+  desiredMarker.scale.y = 0.06;
+  desiredMarker.scale.z = 0.06;
+  desiredMarker.color = ros_msg_helpers::getColor(desiredColor);
+  markerArray.markers.push_back(desiredMarker);
+
+  std::vector<geometry_msgs::Point> trackingErrorLine;
+  trackingErrorLine.reserve(2);
+  trackingErrorLine.push_back(ros_msg_helpers::getPointMsg(eeActualPosition));
+  trackingErrorLine.push_back(ros_msg_helpers::getPointMsg(eeDesiredPosition));
+  auto errorLineMarker = ros_msg_helpers::getLineMsg(std::move(trackingErrorLine), errorColor, 0.01);
+  errorLineMarker.header = ros_msg_helpers::getHeaderMsg("world", timeStamp);
+  errorLineMarker.ns = "EE Tracking Error";
+  errorLineMarker.id = 2;
+  markerArray.markers.push_back(std::move(errorLineMarker));
+
+  endEffectorTrackingPublisher_.publish(markerArray);
 }
 
 /******************************************************************************************************/

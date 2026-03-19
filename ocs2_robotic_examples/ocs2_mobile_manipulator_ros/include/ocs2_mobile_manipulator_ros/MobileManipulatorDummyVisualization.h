@@ -57,6 +57,8 @@ class MobileManipulatorDummyVisualization final : public DummyObserver {
 
   void publishObservation(const ros::Time& timeStamp, const SystemObservation& observation);
   void publishTargetTrajectories(const ros::Time& timeStamp, const TargetTrajectories& targetTrajectories);
+  void publishEndEffectorTracking(const ros::Time& timeStamp, const SystemObservation& observation,
+                                  const TargetTrajectories& targetTrajectories);
   void publishOptimizedTrajectory(const ros::Time& timeStamp, const PrimalSolution& policy);
 
   PinocchioInterface pinocchioInterface_;
@@ -68,6 +70,7 @@ class MobileManipulatorDummyVisualization final : public DummyObserver {
 
   ros::Publisher stateOptimizedPublisher_;
   ros::Publisher stateOptimizedPosePublisher_;
+  ros::Publisher endEffectorTrackingPublisher_;
 
   std::unique_ptr<GeometryInterfaceVisualization> geometryVisualization_;
 };

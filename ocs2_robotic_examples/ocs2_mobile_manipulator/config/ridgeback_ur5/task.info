@@ -204,6 +204,43 @@ selfCollision
   activate  false
 
   ; TODO: Replace the collision meshes of the arm with primitive shapes.
+
+  ; 自碰撞物体对
+  collisionObjectPairs
+  {
+    ; 你可以根据需要定义额外的自碰撞物体对
+  }
+ ; 自碰撞链接对
+ collisionLinkPairs
+  {
+    ; 机械臂和底盘之间的防碰撞
+    [0] "chassis_link, ur_arm_wrist_1_link"
+    [1] "chassis_link, ur_arm_tool0"
+    ;[2] "chassis_link, ur_arm_upper_arm_link"
+    ;[3] "chassis_link, ur_arm_forearm_link"
+    ;[4] "chassis_link, ur_arm_wrist_1_link"
+   ; [5] "chassis_link, ur_arm_wrist_2_link"
+    ;[6] "chassis_link, ur_arm_wrist_3_link"
+    ;[7] "chassis_link, ur_arm_flange"
+    ;[8] "chassis_link, ur_arm_tool0"
+
+    ; 机械臂各关节之间的自碰撞约束
+   ; [9] "ur_arm_base_link, ur_arm_shoulder_link"
+    ;[10] "ur_arm_shoulder_link, ur_arm_upper_arm_link"
+   ; [11] "ur_arm_upper_arm_link, ur_arm_forearm_link"
+   ; [12] "ur_arm_forearm_link, ur_arm_wrist_1_link"
+   ; [13] "ur_arm_wrist_1_link, ur_arm_wrist_2_link"
+   ; [14] "ur_arm_wrist_2_link, ur_arm_wrist_3_link"
+   ; [15] "ur_arm_wrist_3_link, ur_arm_flange"
+   ; [16] "ur_arm_flange, ur_arm_tool0"
+  }
+
+ ; 链接间允许的最小距离
+  minimumDistance 0.05
+
+  ; 放松的对数障碍参数
+  mu 1e-2
+  delta 1e-3
 }
 
 ; Only applied for arm joints: limits parsed from URDF
